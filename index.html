@@ -17,15 +17,15 @@
         #game-board {
             width: 400px;
             height: 400px;
-            border: 2px solid #4CAF50;
+            border: 4px solid #ffffff;
             position: relative;
-            background: #000;
+            background: #000000;
         }
 
         .snake-segment {
             width: 20px;
             height: 20px;
-            background: #4CAF50;
+            background: linear-gradient(90deg, #4CAF50 50%, white 50%);
             position: absolute;
             border-radius: 4px;
         }
@@ -96,71 +96,20 @@
             background: #ff4444;
         }
 
-        .border-3d {
-            border: 2px solid #999;
-            border-radius: 5px;
-            box-shadow: 
-                3px 3px 5px rgba(0, 0, 0, 0.3),  /* Outer shadow */
-                inset 0 0 2px rgba(255, 255, 255, 0.5); /* Inner highlight */
-            background: linear-gradient(145deg, #ffffff, #e6e6e6);
-            padding: 15px;
+        #joystick-container {
+            margin-top: 20px;
         }
 
-        /* Raised 3D */
-        .border-3d-raised {
-            border: 1px solid #ccc;
-            box-shadow: 
-                0 6px 10px rgba(0, 0, 0, 0.15),
-                0 0 0 1px rgba(255, 255, 255, 0.8) inset;
-            border-radius: 5px;
-            padding: 15px;
+        #joystick {
+            width: 150px;
+            height: 150px;
+            position: relative;
+            background: red;
+            border-radius: 50%;
         }
 
-        /* Carved/Inset 3D */
-        .border-3d-inset {
-            border: 2px solid #ddd;
-            box-shadow: 
-                inset 2px 2px 5px rgba(0, 0, 0, 0.2),
-                inset -2px -2px 5px rgba(255, 255, 255, 0.8);
-            border-radius: 5px;
-            padding: 15px;
-        }
-
-        /* Mobile-specific styles */
-        @media (max-width: 768px) {
-            #game-board {
-                width: 300px;
-                height: 300px;
-            }
-
-            .touch-controls {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 10px;
-                width: 300px;
-                margin: 20px auto;
-            }
-
-            .touch-btn {
-                background: rgba(76, 175, 80, 0.3);
-                border: 2px solid #4CAF50;
-                color: white;
-                padding: 20px;
-                border-radius: 50%;
-                touch-action: manipulation;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .touch-btn:active {
-                background: rgba(76, 175, 80, 0.5);
-            }
-
-            #up-btn { grid-column: 2; grid-row: 1; }
-            #left-btn { grid-column: 1; grid-row: 2; }
-            #right-btn { grid-column: 3; grid-row: 2; }
-            #down-btn { grid-column: 2; grid-row: 3; }
+        #joystick button {
+            background: white;
         }
     </style>
 </head>
@@ -173,24 +122,19 @@
     <div id="game-board">
         <div class="game-over">Game Over!</div>
     </div>
-    <div class="touch-controls">
-        <button class="touch-btn" id="up-btn">↑</button>
-        <button class="touch-btn" id="left-btn">←</button>
-        <button class="touch-btn" id="right-btn">→</button>
-        <button class="touch-btn" id="down-btn">↓</button>
+    <div id="joystick-container">
+        <div id="joystick"></div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/nipplejs@0.8.0/dist/nipplejs.min.js"></script>
     <script>
         class Snake {
             constructor() {
-                // Check if we're on mobile
-                const isMobile = window.innerWidth <= 768;
-                
                 this.segments = [{x: 0, y: 0}];
                 this.direction = 'right';
                 this.nextDirection = 'right';
-                this.gridSize = isMobile ? 15 : 20; // Smaller grid size for mobile
-                this.boardWidth = isMobile ? 300 : 400;
-                this.boardHeight = isMobile ? 300 : 400;
+                this.gridSize = 20;
+                this.boardWidth = 400;
+                this.boardHeight = 400;
                 this.food = this.generateFood();
                 this.bonusFood = null;
                 this.bonusFoodTimer = null;
@@ -202,6 +146,7 @@
                 this.gameLoop = null;
                 this.isPaused = true;
 
+                this.setupJoystick();
                 this.setupEventListeners();
                 this.render();
             }
@@ -251,24 +196,6 @@
             }
 
             setupEventListeners() {
-                document.addEventListener('keydown', (e) => {
-                    if (this.isPaused || this.gameOver) return;
-                    switch(e.key) {
-                        case 'ArrowUp':
-                            if (this.direction !== 'down') this.nextDirection = 'up';
-                            break;
-                        case 'ArrowDown':
-                            if (this.direction !== 'up') this.nextDirection = 'down';
-                            break;
-                        case 'ArrowLeft':
-                            if (this.direction !== 'right') this.nextDirection = 'left';
-                            break;
-                        case 'ArrowRight':
-                            if (this.direction !== 'left') this.nextDirection = 'right';
-                            break;
-                    }
-                });
-
                 document.getElementById('startPauseBtn').addEventListener('click', () => {
                     if (this.gameOver) {
                         this.reset();
@@ -283,72 +210,54 @@
                 document.getElementById('resetBtn').addEventListener('click', () => {
                     this.reset();
                 });
+            }
 
-                // Add touch controls
-                const touchButtons = {
-                    'up-btn': 'up',
-                    'down-btn': 'down',
-                    'left-btn': 'left',
-                    'right-btn': 'right'
-                };
-
-                Object.entries(touchButtons).forEach(([btnId, direction]) => {
-                    const btn = document.getElementById(btnId);
-                    if (btn) {
-                        btn.addEventListener('touchstart', (e) => {
-                            e.preventDefault(); // Prevent double-tap zoom
-                            if (this.isPaused || this.gameOver) return;
-                            
-                            const opposites = {
-                                'up': 'down',
-                                'down': 'up',
-                                'left': 'right',
-                                'right': 'left'
-                            };
-                            
-                            if (this.direction !== opposites[direction]) {
-                                this.nextDirection = direction;
-                            }
-                        });
-                    }
+            setupJoystick() {
+                const joystickManager = nipplejs.create({
+                    zone: document.getElementById('joystick'),
+                    mode: 'static',
+                    position: { left: '50%', top: '50%' },
+                    color: 'black',
+                    size: 150
                 });
 
-                // Add meta viewport tag for better mobile display
-                const meta = document.createElement('meta');
-                meta.name = 'viewport';
-                meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-                document.head.appendChild(meta);
+                joystickManager.on('move', (event, data) => {
+                    if (!data.direction || this.isPaused || this.gameOver) return;
 
-                // Prevent default touch behaviors
-                document.addEventListener('touchmove', (e) => {
-                    if (e.touches.length === 1) {
-                        e.preventDefault();
+                    const { angle } = data;
+                    if (angle.degree >= 45 && angle.degree < 135 && this.direction !== 'down') {
+                        this.nextDirection = 'up';
+                    } else if (angle.degree >= 135 && angle.degree < 225 && this.direction !== 'right') {
+                        this.nextDirection = 'left';
+                    } else if (angle.degree >= 225 && angle.degree < 315 && this.direction !== 'up') {
+                        this.nextDirection = 'down';
+                    } else if ((angle.degree >= 315 || angle.degree < 45) && this.direction !== 'left') {
+                        this.nextDirection = 'right';
                     }
-                }, { passive: false });
+                });
             }
 
             move() {
                 if (this.gameOver || this.isPaused) return;
 
                 this.direction = this.nextDirection;
-                const head = {...this.segments[0]};
+                const head = { ...this.segments[0] };
 
-                switch(this.direction) {
+                switch (this.direction) {
                     case 'up': head.y -= this.gridSize; break;
                     case 'down': head.y += this.gridSize; break;
                     case 'left': head.x -= this.gridSize; break;
                     case 'right': head.x += this.gridSize; break;
                 }
 
-                // Check collision with walls
-                if (head.x < 0 || head.x >= this.boardWidth || 
-                    head.y < 0 || head.y >= this.boardHeight) {
-                    this.endGame();
-                    return;
-                }
+                // Handle seamless wall passage
+                if (head.x < 0) head.x = this.boardWidth - this.gridSize;
+                else if (head.x >= this.boardWidth) head.x = 0;
+                else if (head.y < 0) head.y = this.boardHeight - this.gridSize;
+                else if (head.y >= this.boardHeight) head.y = 0;
 
                 // Check collision with self
-                if (this.segments.some(segment => 
+                if (this.segments.some(segment =>
                     segment.x === head.x && segment.y === head.y)) {
                     this.endGame();
                     return;
@@ -360,12 +269,12 @@
                 if (head.x === this.food.x && head.y === this.food.y) {
                     this.score += 10;
                     this.foodCollected++;
-                    
+
                     // Spawn bonus food every 10 regular food items collected
                     if (this.foodCollected % 10 === 0) {
                         this.spawnBonusFood();
                     }
-                    
+
                     document.getElementById('score').textContent = `Score: ${this.score}`;
                     this.food = this.generateFood();
                     // Increase speed slightly
@@ -385,13 +294,13 @@
             generateFood() {
                 const x = Math.floor(Math.random() * (this.boardWidth / this.gridSize)) * this.gridSize;
                 const y = Math.floor(Math.random() * (this.boardHeight / this.gridSize)) * this.gridSize;
-                
+
                 // Make sure food doesn't appear on snake
                 if (this.segments.some(segment => segment.x === x && segment.y === y)) {
                     return this.generateFood();
                 }
-                
-                return {x, y};
+
+                return { x, y };
             }
 
             render() {
@@ -438,7 +347,7 @@
                 this.bonusFood = this.generateFood();
                 // Clear existing bonus food timer if it exists
                 if (this.bonusFoodTimer) clearTimeout(this.bonusFoodTimer);
-                
+
                 // Set timer to remove bonus food after 5 seconds
                 this.bonusFoodTimer = setTimeout(() => {
                     this.bonusFood = null;
@@ -451,4 +360,4 @@
         new Snake();
     </script>
 </body>
-</html> 
+</html>
