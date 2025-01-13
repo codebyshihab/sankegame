@@ -3,58 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snake Game</title>
+    <title>Futuristic Snake Game</title>
     <style>
         body {
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: #1a1a1a;
-            color: white;
-            font-family: Arial, sans-serif;
+            background: #0a0a2a;
+            color: #7DF9FF;
+            font-family: 'Orbitron', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background: radial-gradient(circle at center, #0a0a2a 0%, #000000 100%);
         }
 
         #game-board {
             width: 400px;
             height: 400px;
-            border: 4px solid #ffffff;
+            border: 2px solid #7DF9FF;
             position: relative;
             background: #000000;
+            box-shadow: 0 0 20px #7DF9FF, inset 0 0 20px #7DF9FF;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        #game-board::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(90deg, #7DF9FF22 1px, transparent 1px) 0 0 / 20px 20px,
+                linear-gradient(0deg, #7DF9FF22 1px, transparent 1px) 0 0 / 20px 20px;
+            opacity: 0.3;
         }
 
         .snake-segment {
             width: 20px;
             height: 20px;
-            background: linear-gradient(90deg, #4CAF50 50%, white 50%);
+            background: #7DF9FF;
             position: absolute;
             border-radius: 4px;
+            box-shadow: 0 0 10px #7DF9FF;
+            transition: all 0.1s ease;
+        }
+
+        .snake-segment::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            background: linear-gradient(135deg, #7DF9FF 0%, #4a9da3 100%);
+            border-radius: 2px;
+            animation: pulse 1.5s ease-in-out infinite;
         }
 
         .food {
             width: 20px;
             height: 20px;
-            background: #ff4444;
+            background: #FF355E;
             position: absolute;
             border-radius: 50%;
+            box-shadow: 0 0 15px #FF355E;
+            animation: foodPulse 1s ease-in-out infinite;
         }
 
         .bonus-food {
             width: 20px;
             height: 20px;
-            background: #ffd700;
+            background: #FFD700;
             position: absolute;
             border-radius: 50%;
-            animation: pulse 0.5s infinite alternate;
+            box-shadow: 0 0 20px #FFD700;
+            animation: bonusPulse 0.5s ease-in-out infinite;
         }
 
         @keyframes pulse {
-            from { transform: scale(1); }
-            to { transform: scale(1.2); }
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+
+        @keyframes foodPulse {
+            0% { transform: scale(1); box-shadow: 0 0 15px #FF355E; }
+            50% { transform: scale(1.1); box-shadow: 0 0 25px #FF355E; }
+            100% { transform: scale(1); box-shadow: 0 0 15px #FF355E; }
+        }
+
+        @keyframes bonusPulse {
+            0% { transform: scale(1); box-shadow: 0 0 20px #FFD700; }
+            50% { transform: scale(1.2); box-shadow: 0 0 30px #FFD700; }
+            100% { transform: scale(1); box-shadow: 0 0 20px #FFD700; }
         }
 
         #score {
-            font-size: 24px;
+            font-size: 28px;
             margin: 20px 0;
+            text-shadow: 0 0 10px #7DF9FF;
+            letter-spacing: 2px;
         }
 
         .game-over {
@@ -63,53 +113,127 @@
             left: 50%;
             transform: translate(-50%, -50%);
             font-size: 32px;
-            color: #ff4444;
+            color: #FF355E;
+            text-shadow: 0 0 20px #FF355E;
             display: none;
+            z-index: 10;
+            text-transform: uppercase;
+            letter-spacing: 4px;
         }
 
         .controls {
             margin: 20px 0;
+            display: flex;
+            gap: 15px;
+            align-items: center;
         }
 
         button {
-            padding: 10px 20px;
+            padding: 12px 24px;
             font-size: 16px;
-            margin: 0 10px;
-            background: #4CAF50;
-            color: white;
-            border: none;
+            font-family: 'Orbitron', sans-serif;
+            background: transparent;
+            color: #7DF9FF;
+            border: 2px solid #7DF9FF;
             border-radius: 4px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 10px #7DF9FF;
         }
 
         button:hover {
-            background: #45a049;
+            background: #7DF9FF33;
+            box-shadow: 0 0 20px #7DF9FF;
         }
 
         button:disabled {
-            background: #666;
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
-        #startPauseBtn.paused {
-            background: #ff4444;
+        #button-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        #button-controls button {
+            width: 60px;
+            height: 40px;
+            padding: 0;
+            font-size: 20px;
         }
 
         #joystick-container {
             margin-top: 20px;
-        }
-
-        #joystick {
             width: 150px;
             height: 150px;
-            position: relative;
-            background: red;
+            border: 2px solid #7DF9FF;
             border-radius: 50%;
+            box-shadow: 0 0 15px #7DF9FF;
+            background: rgba(125, 249, 255, 0.1);
+            position: relative;
+            overflow: hidden;
         }
 
-        #joystick button {
-            background: white;
+        /* Style for the nippleJS elements */
+        .nipple {
+            width: 100px !important;
+            height: 100px !important;
+            position: absolute;
+            background: rgba(125, 249, 255, 0.2) !important;
+            border: 2px solid #7DF9FF !important;
+            box-shadow: 0 0 10px #7DF9FF !important;
+        }
+
+        .front {
+            background: #7DF9FF !important;
+            box-shadow: 0 0 15px #7DF9FF !important;
+        }
+
+        .back {
+            background: rgba(125, 249, 255, 0.1) !important;}
+
+            
+        label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #7DF9FF;
+        }
+
+        input[type="radio"] {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #7DF9FF;
+            border-radius: 50%;
+            margin: 0;
+            cursor: pointer;
+            position: relative;
+        }
+
+        input[type="radio"]:checked::before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #7DF9FF;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: radioPulse 1.5s infinite;
+        }
+
+        @keyframes radioPulse {
+            0% { box-shadow: 0 0 0 0 #7DF9FF80; }
+            70% { box-shadow: 0 0 0 10px #7DF9FF00; }
+            100% { box-shadow: 0 0 0 0 #7DF9FF00; }
         }
     </style>
 </head>
@@ -118,9 +242,24 @@
     <div class="controls">
         <button id="startPauseBtn">Start</button>
         <button id="resetBtn">Reset</button>
+        <label>
+            <input type="radio" name="controlMode" value="joystick" checked> Joystick
+        </label>
+        <label>
+            <input type="radio" name="controlMode" value="buttons"> Buttons
+        </label>
     </div>
     <div id="game-board">
         <div class="game-over">Game Over!</div>
+    </div>
+    <div id="button-controls" style="display: none;">
+        <button id="upBtn">↑</button>
+        <div>
+            <button id="leftBtn">←</button>
+            <button id="downBtn">↓</button>
+            <button id="rightBtn">→</button>
+        </div>
+
     </div>
     <div id="joystick-container">
         <div id="joystick"></div>
@@ -129,7 +268,7 @@
     <script>
         class Snake {
             constructor() {
-                this.segments = [{x: 0, y: 0}];
+                this.segments = [{ x: 0, y: 0 }];
                 this.direction = 'right';
                 this.nextDirection = 'right';
                 this.gridSize = 20;
@@ -141,57 +280,14 @@
                 this.bonusFoodScore = 50;
                 this.foodCollected = 0;
                 this.score = 0;
-                this.gameOver = false;
-                this.speed = 150;
-                this.gameLoop = null;
                 this.isPaused = true;
+                this.gameLoop = null;
+                this.initialSpeed = 150;  // Store initial speed value
+                this.speed = this.initialSpeed;
+                this.gameOver = false;
 
                 this.setupJoystick();
                 this.setupEventListeners();
-                this.render();
-            }
-
-            startGameLoop() {
-                if (this.gameLoop) return;
-                this.isPaused = false;
-                document.getElementById('startPauseBtn').textContent = 'Pause';
-                document.getElementById('startPauseBtn').classList.remove('paused');
-                this.gameLoop = setInterval(() => {
-                    if (!this.gameOver) {
-                        this.move();
-                        this.render();
-                    }
-                }, this.speed);
-            }
-
-            stopGameLoop() {
-                if (this.gameLoop) {
-                    clearInterval(this.gameLoop);
-                    this.gameLoop = null;
-                    this.isPaused = true;
-                    if (this.bonusFoodTimer) {
-                        clearTimeout(this.bonusFoodTimer);
-                    }
-                    document.getElementById('startPauseBtn').textContent = 'Start';
-                    document.getElementById('startPauseBtn').classList.add('paused');
-                }
-            }
-
-            reset() {
-                this.stopGameLoop();
-                this.segments = [{x: 0, y: 0}];
-                this.direction = 'right';
-                this.nextDirection = 'right';
-                this.food = this.generateFood();
-                this.bonusFood = null;
-                this.foodCollected = 0;
-                if (this.bonusFoodTimer) {
-                    clearTimeout(this.bonusFoodTimer);
-                }
-                this.score = 0;
-                this.gameOver = false;
-                this.speed = 150;
-                document.getElementById('score').textContent = 'Score: 0';
                 this.render();
             }
 
@@ -210,10 +306,27 @@
                 document.getElementById('resetBtn').addEventListener('click', () => {
                     this.reset();
                 });
+
+                document.querySelectorAll('input[name="controlMode"]').forEach(radio => {
+                    radio.addEventListener('change', (event) => {
+                        if (event.target.value === 'joystick') {
+                            document.getElementById('joystick-container').style.display = 'block';
+                            document.getElementById('button-controls').style.display = 'none';
+                        } else {
+                            document.getElementById('joystick-container').style.display = 'none';
+                            document.getElementById('button-controls').style.display = 'flex';
+                        }
+                    });
+                });
+
+                document.getElementById('upBtn').addEventListener('click', () => this.setDirection('up'));
+                document.getElementById('downBtn').addEventListener('click', () => this.setDirection('down'));
+                document.getElementById('leftBtn').addEventListener('click', () => this.setDirection('left'));
+                document.getElementById('rightBtn').addEventListener('click', () => this.setDirection('right'));
             }
 
             setupJoystick() {
-                const joystickManager = nipplejs.create({
+                const joystick = nipplejs.create({
                     zone: document.getElementById('joystick'),
                     mode: 'static',
                     position: { left: '50%', top: '50%' },
@@ -221,25 +334,65 @@
                     size: 150
                 });
 
-                joystickManager.on('move', (event, data) => {
+                joystick.on('move', (event, data) => {
                     if (!data.direction || this.isPaused || this.gameOver) return;
-
                     const { angle } = data;
-                    if (angle.degree >= 45 && angle.degree < 135 && this.direction !== 'down') {
-                        this.nextDirection = 'up';
-                    } else if (angle.degree >= 135 && angle.degree < 225 && this.direction !== 'right') {
-                        this.nextDirection = 'left';
-                    } else if (angle.degree >= 225 && angle.degree < 315 && this.direction !== 'up') {
-                        this.nextDirection = 'down';
-                    } else if ((angle.degree >= 315 || angle.degree < 45) && this.direction !== 'left') {
-                        this.nextDirection = 'right';
-                    }
+                    if (angle.degree >= 45 && angle.degree < 135) this.setDirection('up');
+                    if (angle.degree >= 135 && angle.degree < 225) this.setDirection('left');
+                    if (angle.degree >= 225 && angle.degree < 315) this.setDirection('down');
+                    if (angle.degree >= 315 || angle.degree < 45) this.setDirection('right');
                 });
             }
 
-            move() {
-                if (this.gameOver || this.isPaused) return;
+            startGameLoop() {
+                this.isPaused = false;
+                document.getElementById('startPauseBtn').textContent = 'Pause';
+                this.gameLoop = setInterval(() => {
+                    if (!this.gameOver) {
+                        this.move();
+                        this.render();
+                    }
+                }, this.speed);
+            }
 
+            stopGameLoop() {
+                clearInterval(this.gameLoop);
+                this.isPaused = true;
+                document.getElementById('startPauseBtn').textContent = 'Start';
+            }
+
+            reset() {
+                this.stopGameLoop();
+                this.segments = [{ x: 0, y: 0 }];
+                this.direction = 'right';
+                this.nextDirection = 'right';
+                this.food = this.generateFood();
+                this.bonusFood = null;
+                if (this.bonusFoodTimer) {
+                    clearTimeout(this.bonusFoodTimer);
+                }
+                this.score = 0;
+                this.foodCollected = 0;
+                this.speed = this.initialSpeed;  // Reset speed to initial value
+                this.gameOver = false;
+                document.getElementById('score').textContent = `Score: ${this.score}`;
+                this.render();
+            }
+
+            setDirection(newDirection) {
+                const opposite = {
+                    'up': 'down',
+                    'down': 'up',
+                    'left': 'right',
+                    'right': 'left'
+                };
+                if (newDirection !== opposite[this.direction]) {
+                    this.nextDirection = newDirection;
+                }
+            }
+
+            move() {
+                if (this.isPaused || this.gameOver) return;
                 this.direction = this.nextDirection;
                 const head = { ...this.segments[0] };
 
@@ -250,7 +403,7 @@
                     case 'right': head.x += this.gridSize; break;
                 }
 
-                // Handle seamless wall passage
+                   // Handle seamless wall passage
                 if (head.x < 0) head.x = this.boardWidth - this.gridSize;
                 else if (head.x >= this.boardWidth) head.x = 0;
                 else if (head.y < 0) head.y = this.boardHeight - this.gridSize;
