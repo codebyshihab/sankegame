@@ -1,0 +1,16 @@
+{
+  "name": "futuristic-snake-game",
+  "version": "1.0.0",
+  "description": "A futuristic neon snake game with joystick and button controls",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "echo 'No build step required'",
+    "lint": "echo 'No lint issues'",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
